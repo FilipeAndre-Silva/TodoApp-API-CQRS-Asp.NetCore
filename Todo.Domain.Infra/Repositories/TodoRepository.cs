@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Todo.Domain.Entities;
 using Todo.Domain.Infra.Contexts;
@@ -18,55 +19,59 @@ namespace Todo.Domain.Infra.Repositories
             _context = context;
         }
 
-        public void Create(TodoItem todo)
+        public async Task<TodoItem> Create(TodoItem todo)
         {
+            try
+            {
             _context.Todos.Add(todo);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+                return todo;
+            }catch{
+                return todo;
+            }
         }
 
-        public IEnumerable<TodoItem> GetAll(string user)
+        public async Task<IEnumerable<TodoItem>> GetAll()
         {
-            return _context.Todos
-               .AsNoTracking()
-               .Where(TodoQueries.GetAll(user))
-               .OrderBy(x => x.Date);
+            return await _context.Todos.AsNoTracking().ToListAsync();
         }
 
-        public IEnumerable<TodoItem> GetAllDone(string user)
+        public async Task<IEnumerable<TodoItem>> GetAllDone()
         {
-            return _context.Todos
+            return await _context.Todos
                 .AsNoTracking()
-                .Where(TodoQueries.GetAllDone(user))
-                .OrderBy(x => x.Date);
+                .Where(TodoQueries.GetAllDone())
+                .OrderBy(x => x.Date).ToListAsync();
         }
 
-        public IEnumerable<TodoItem> GetAllUndone(string user)
+        public async Task<IEnumerable<TodoItem>> GetAllUndone()
         {
-            return _context.Todos
+            return await _context.Todos
                 .AsNoTracking()
-                .Where(TodoQueries.GetAllUndone(user))
-                .OrderBy(x => x.Date);
+                .Where(TodoQueries.GetAllUndone())
+                .OrderBy(x => x.Date).ToListAsync();
         }
 
-        public TodoItem GetById(Guid id, string user)
+        public async Task<TodoItem> GetById(Guid id)
         {
-            return _context
+            return await _context
                 .Todos
-                .FirstOrDefault(x => x.Id == id && x.User == user);
+                .FirstOrDefaultAsync(TodoQueries.GetById(id));
         }
 
-        public IEnumerable<TodoItem> GetByPeriod(string user, DateTime date, bool done)
+        public async Task<IEnumerable<TodoItem>> GetByPeriod(string user, DateTime date, bool done)
         {
-            return _context.Todos
+            return await _context.Todos
                 .AsNoTracking()
                 .Where(TodoQueries.GetByPeriod(user, date, done))
-                .OrderBy(x => x.Date);
+                .OrderBy(x => x.Date).ToListAsync();
         }
 
-        public void Update(TodoItem todo)
+        public async Task<TodoItem> Update(TodoItem todo)
         {
             _context.Entry(todo).State = EntityState.Modified;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+            return todo;
         }
     }
 }

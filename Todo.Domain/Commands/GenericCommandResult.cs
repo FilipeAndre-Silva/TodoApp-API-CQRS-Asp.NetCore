@@ -13,7 +13,16 @@ namespace Todo.Domain.Commands
             Data = data;
         }
 
+        public GenericCommandResult(bool success, string message, object data, int statusCode)
+        {
+            Success = success;
+            Message = message;
+            Data = data;
+            StatusCode = statusCode;
+        }
+
         public bool Success { get; set; }
+        public int StatusCode { get; set; }
         public string Message { get; set; }
         public object Data { get; set; }
     }

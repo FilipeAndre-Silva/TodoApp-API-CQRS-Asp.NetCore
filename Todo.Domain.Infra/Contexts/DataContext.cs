@@ -9,7 +9,7 @@ namespace Todo.Domain.Infra.Contexts
             : base(options)
         {
         }
-
+        
         public DbSet<TodoItem> Todos { get; set; }
     }
 }

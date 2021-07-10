@@ -1,87 +1,101 @@
+using System.Threading.Tasks;
 using Todo.Domain.Commands;
-using Todo.Domain.Commands.Contracts;
 using Todo.Domain.Entities;
 using Todo.Domain.Handlers.Contracts;
 using Todo.Domain.Repositories;
 
 namespace Todo.Domain.Handlers
 {
-    public class TodoHandler :
-        IHandler<CreateTodoCommand>,
-        IHandler<UpdateTodoCommand>,
-        IHandler<MarkTodoAsDoneCommand>,
-        IHandler<MarkTodoAsUndoneCommand>
+    public class TodoHandler : IHandler<CreateTodoCommand>,
+                               IHandler<UpdateTodoCommand>,
+                               IHandler<MarkTodoAsDoneCommand>,
+                               IHandler<MarkTodoAsUndoneCommand>
     {
         private readonly ITodoRepository _repository;
+        private int _statusCode;
+        private GenericCommandResult _commandResult = new GenericCommandResult();
 
         public TodoHandler(ITodoRepository repository)
         {
             _repository = repository;
         }
 
-        public ICommandResult Handle(CreateTodoCommand command)
+        public async Task<GenericCommandResult> Handle(CreateTodoCommand command)
         {
-            // Fail Fast Validation
+            // TODO: Fail Fast Validation
 
-            // Gera o TodoItem
-            var todo = new TodoItem(command.Title, command.User, command.Date);
+            var todoItem = new TodoItem(command.Title, command.User, command.Date);
 
-            // Salva no banco
-            _repository.Create(todo);
+            var todoCreated = await _repository.Create(todoItem);
 
-            // Retorna o resultado
-            return new GenericCommandResult(true, "Tarefa salva", todo);
+            if(todoCreated == null)
+            {
+                _commandResult.StatusCode = 400;
+                _commandResult.Message = "Aconteceu algo de errado no ato do cadastro da Tarefa, tente novamente.";
+                return _commandResult;
+            }
+
+            return new GenericCommandResult(true, "Tarefa salva.", todoCreated, 201);
         }
 
-        public ICommandResult Handle(UpdateTodoCommand command)
+        public async Task<GenericCommandResult> Handle(UpdateTodoCommand command)
         {
-            // Fail Fast Validation
+           // TODO: Fail Fast Validation
 
-            // Recupera o TodoItem (Rehidratação)
-            var todo = _repository.GetById(command.Id, command.User);
+            var todoItemFound = await _repository.GetById(command.Id);
 
-            // Altera o título
-            todo.UpdateTitle(command.Title);
+            if(todoItemFound == null)
+            {
+                _commandResult.StatusCode = 404;
+                _commandResult.Message = "Tarefa não existe.";
+                return _commandResult;
+            }
+            
+            todoItemFound.UpdateTitle(command.Title);
 
-            // Salva no banco
-            _repository.Update(todo);
+            await _repository.Update(todoItemFound);
 
-            // Retorna o resultado
-            return new GenericCommandResult(true, "Tarefa salva", todo);
+            return new GenericCommandResult(true, "Tarefa atualizada.", todoItemFound, 200);
         }
 
-        public ICommandResult Handle(MarkTodoAsDoneCommand command)
+        public async Task<GenericCommandResult> Handle(MarkTodoAsDoneCommand command)
         {
-            // Fail Fast Validation
+            // TODO: Fail Fast Validation
 
-            // Recupera o TodoItem
-            var todo = _repository.GetById(command.Id, command.User);
+            var todoItemFound = await _repository.GetById(command.Id);
 
-            // Altera o estado
-            todo.MarkAsDone();
+            if(todoItemFound == null)
+            {
+                _commandResult.StatusCode = 404;
+                _commandResult.Message = "Tarefa não existe.";
+                return _commandResult;
+            }
 
-            // Salva no banco
-            _repository.Update(todo);
+            todoItemFound.MarkAsDone();
 
-            // Retorna o resultado
-            return new GenericCommandResult(true, "Tarefa salva", todo);
+            await _repository.Update(todoItemFound);
+
+            return new GenericCommandResult(true, "Tarefa atualizada.", todoItemFound, 200);
         }
 
-        public ICommandResult Handle(MarkTodoAsUndoneCommand command)
+        public async Task<GenericCommandResult> Handle(MarkTodoAsUndoneCommand command)
         {
-            // Fail Fast Validation
+            // TODO: Fail Fast Validation
 
-            // Recupera o TodoItem
-            var todo = _repository.GetById(command.Id, command.User);
+            var todoItemFound = await _repository.GetById(command.Id);
 
-            // Altera o estado
-            todo.MarkAsUndone();
+            if(todoItemFound == null)
+            {
+                _commandResult.StatusCode = 404;
+                _commandResult.Message = "Tarefa não existe.";
+                return _commandResult;
+            }
 
-            // Salva no banco
-            _repository.Update(todo);
+            todoItemFound.MarkAsUndone();
 
-            // Retorna o resultado
-            return new GenericCommandResult(true, "Tarefa salva", todo);
+            var tudoUpdate = await _repository.Update(todoItemFound);
+
+            return new GenericCommandResult(true, "Tarefa atualizada.", tudoUpdate);
         }
     }
 }

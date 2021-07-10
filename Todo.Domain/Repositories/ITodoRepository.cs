@@ -1,17 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Todo.Domain.Entities;
 
 namespace Todo.Domain.Repositories
 {
    public interface ITodoRepository
     {
-        void Create(TodoItem todo);
-        void Update(TodoItem todo);
-        TodoItem GetById(Guid id, string user);
-        IEnumerable<TodoItem> GetAll(string user);
-        IEnumerable<TodoItem> GetAllDone(string user);
-        IEnumerable<TodoItem> GetAllUndone(string user);
-        IEnumerable<TodoItem> GetByPeriod(string user, DateTime date, bool done);
+        Task<TodoItem> Create(TodoItem todo);
+        Task<TodoItem> Update(TodoItem todo);
+        Task<TodoItem> GetById(Guid id);
+        Task<IEnumerable<TodoItem>> GetAll();
+        Task<IEnumerable<TodoItem>> GetAllDone();
+        Task<IEnumerable<TodoItem>> GetAllUndone();
+        Task<IEnumerable<TodoItem>> GetByPeriod(string user, DateTime date, bool done);
     }
 }

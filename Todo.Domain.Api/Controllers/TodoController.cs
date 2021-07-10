@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Todo.Domain.Commands;
 using Todo.Domain.Entities;
@@ -15,132 +16,139 @@ namespace Todo.Domain.Api.Controllers
     {
         [Route("")]
         [HttpGet]
-        public IEnumerable<TodoItem> GetAll(
-            [FromServices]ITodoRepository repository
-        )
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetAll([FromServices]ITodoRepository repository)
         {
-            var user = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return repository.GetAll(user);
+            var listTodoItens = await repository.GetAll();
+
+            if(!listTodoItens.Any())
+            {
+                return NoContent();
+            }
+            else
+            {
+                return Ok(listTodoItens);
+            }
+        }
+
+        [Route("{todoId:Guid}")]
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetById([FromServices]ITodoRepository repository,
+                                                                      Guid todoId)
+        {
+            var todoItem = await repository.GetById(todoId);
+
+            if(todoItem == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(todoItem);
+            }
         }
 
         [Route("done")]
         [HttpGet]
-        public IEnumerable<TodoItem> GetAllDone(
-            [FromServices]ITodoRepository repository
-        )
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetAllDone([FromServices]ITodoRepository repository)
         {
-            var user = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return repository.GetAllDone(user);
+            var listTodoItensDone = await repository.GetAllDone();
+
+            if(!listTodoItensDone.Any())
+            {
+                return NoContent();
+            }
+            else
+            {
+                return Ok(listTodoItensDone);
+            }
         }
 
         [Route("undone")]
         [HttpGet]
-        public IEnumerable<TodoItem> GetAllUndone(
-            [FromServices]ITodoRepository repository
-        )
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetAllUndone([FromServices]ITodoRepository repository)
         {
-            var user = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return repository.GetAllUndone(user);
+            var listTodoItensUndone = await repository.GetAllUndone();
+
+            if(!listTodoItensUndone.Any())
+            {
+                return NoContent();
+            }
+            else
+            {
+                return Ok(listTodoItensUndone);
+            }
         }
 
         [Route("done/today")]
         [HttpGet]
-        public IEnumerable<TodoItem> GetDoneForToday(
-            [FromServices]ITodoRepository repository
-        )
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetDoneForToday(string user, 
+                                                                               [FromServices]ITodoRepository repository)
         {
-            var user = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return repository.GetByPeriod(
-                user,
-                DateTime.Now.Date,
-                true
-            );
-        }
-
-        [Route("undone/today")]
-        [HttpGet]
-        public IEnumerable<TodoItem> GetInactiveForToday(
-            [FromServices]ITodoRepository repository
-        )
-        {
-            var user = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return repository.GetByPeriod(
-                user,
-                DateTime.Now.Date,
-                false
-            );
+            var listTodoItensDoneForToday = await repository.GetByPeriod(user,
+                                                                         DateTime.Now.Date,
+                                                                         true);
+            if(!listTodoItensDoneForToday.Any())
+            {
+                return NoContent();
+            }
+            else
+            {
+                return Ok(listTodoItensDoneForToday);
+            }
         }
 
         [Route("done/tomorrow")]
         [HttpGet]
-        public IEnumerable<TodoItem> GetDoneForTomorrow(
-            [FromServices]ITodoRepository repository
-        )
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetDoneForTomorrow(string user,
+                                                                                  [FromServices]ITodoRepository repository)
         {
-            var user = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return repository.GetByPeriod(
-                user,
-                DateTime.Now.Date.AddDays(1),
-                true
-            );
-        }
-
-        [Route("undone/tomorrow")]
-        [HttpGet]
-        public IEnumerable<TodoItem> GetUndoneForTomorrow(
-            [FromServices]ITodoRepository repository
-        )
-        {
-            var user = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return repository.GetByPeriod(
-                user,
-                DateTime.Now.Date.AddDays(1),
-                false
-            );
+            var listTodoItensDoneForTomorrow = await repository.GetByPeriod(user,
+                                                                            DateTime.Now.Date.AddDays(1),
+                                                                            true);
+            if(!listTodoItensDoneForTomorrow.Any())
+            {
+                return NoContent();
+            }
+            else
+            {
+                return Ok(listTodoItensDoneForTomorrow);
+            }
         }
 
         [Route("")]
         [HttpPost]
-        public GenericCommandResult Create(
-            [FromBody]CreateTodoCommand command,
-            [FromServices]TodoHandler handler
-        )
+        public async Task<ObjectResult> Create([FromBody]CreateTodoCommand command,
+                                               [FromServices]TodoHandler handler)
         {
-            command.User = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return (GenericCommandResult)handler.Handle(command);
+            var commandResult = await handler.Handle(command);
+            return StatusCode(commandResult.StatusCode, commandResult);
         }
 
         [Route("")]
         [HttpPut]
-        public GenericCommandResult Update(
-           [FromBody]UpdateTodoCommand command,
-           [FromServices]TodoHandler handler
-       )
+        public async Task<ObjectResult> Update([FromBody]UpdateTodoCommand command,
+                                               [FromServices]TodoHandler handler)
         {
-            command.User = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return (GenericCommandResult)handler.Handle(command);
+            var commandResult = await handler.Handle(command);
+            return StatusCode(commandResult.StatusCode, commandResult);
         }
 
         [Route("mark-as-done")]
         [HttpPut]
-        public GenericCommandResult MarkAsDone(
-            [FromBody]MarkTodoAsDoneCommand command,
-            [FromServices]TodoHandler handler
-        )
+        public async Task<ObjectResult> MarkAsDone([FromBody]MarkTodoAsDoneCommand command,
+                                                   [FromServices]TodoHandler handler)
         {
-            command.User = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return (GenericCommandResult)handler.Handle(command);
+            var commandResult = await handler.Handle(command);
+            return StatusCode(commandResult.StatusCode, commandResult);
         }
 
         [Route("mark-as-undone")]
         [HttpPut]
-        public GenericCommandResult MarkAsUndone(
-            [FromBody]MarkTodoAsUndoneCommand command,
-            [FromServices]TodoHandler handler
-        )
+        public async Task<ObjectResult> MarkAsUndone([FromBody]MarkTodoAsUndoneCommand command,
+                                                             [FromServices]TodoHandler handler)
         {
-            command.User = User.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
-            return (GenericCommandResult)handler.Handle(command);
+            var commandResult = await handler.Handle(command);
+            return StatusCode(commandResult.StatusCode, commandResult);
         }
     }
 }
