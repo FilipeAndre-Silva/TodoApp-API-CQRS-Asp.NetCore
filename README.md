@@ -14,7 +14,7 @@ O intuito desse repositório é aplicar alguns dos conhecimentos absorvidos no c
 
 ## Solução
 
-O repositório contém uma soluação em .NET 5.0 onde foi implementado um pequeno projeto web api com Asp.NET Core inflado com o padrão CQRS. A implementação é responsável pelo gerenciamentos de Tarefas por meio de enpoits expostos por meio de uma API.
+O repositório contém uma soluação em .NET 5.0 onde foi implementado um pequeno projeto web api com Asp.NET Core inflado com o padrão CQRS. A implementação é responsável pelo gerenciamentos de "Tarefas" por meio de endpoits expostos pela API.
 
 ## Como usar ?
 
